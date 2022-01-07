@@ -1,25 +1,12 @@
 #define OLC_PGE_APPLICATION
-#include "olcPixelGameEngine.h"
-
-class SnakeGame : public olc::PixelGameEngine{
-public:
-    SnakeGame(){
-        sAppName = "Snake Game!";
-    }
-
-public:
-    bool OnUserCreate() override{
-        return true;
-    }
-
-    bool OnUserUpdate(float fElapsedTime) override{
-        return true;
-    }
-};
+#include "SnakeGame.h"
+#define SG_SCREENWIDTH 40
+#define SG_SCREENHEIGHT 40
+#define SG_PIXELSIZE 15
 
 int main(){
     SnakeGame instance;
-    if(instance.Construct(600,500,2,2)){
+    if(instance.Construct(SG_SCREENWIDTH, SG_SCREENHEIGHT, SG_PIXELSIZE, SG_PIXELSIZE)){
         instance.Start();
     }
     return 0;

@@ -57,7 +57,7 @@ public:
 
     bool OnUserDestroy() override{
         is_dead = true;
-        return pthread_join(read_speed_thread, NULL);
+        return pthread_join(read_speed_thread, NULL) == 0;
     }
 
     void restart_game(){

@@ -1,5 +1,5 @@
 #define OLC_PGE_APPLICATION
-#include "SnakeGame.h"
+#include "SnakeGame.cpp"
 #define SG_SCREENWIDTH 40
 #define SG_SCREENHEIGHT 40
 #define SG_PIXELSIZE 15

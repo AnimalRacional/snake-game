@@ -12,8 +12,6 @@
 #define SG_BG_COLOR olc::BLACK
 #define SNAKE_HEAD snake_parts[0]
 
-#include <iostream>
-
 class SnakeGame : public olc::PixelGameEngine{
 // Private properties
 private:

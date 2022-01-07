@@ -2,19 +2,23 @@
 #define SG_SNAKEGAME_H
 #include "olcPixelGameEngine.h"
 #include <vector>
-#define SG_SCREENMIDDLE v2d(ScreenWidth()/2, ScreenHeight()/2)
+#include "SnakePart.h"
+#define SG_SCREENMIDDLE olc::vi2d(ScreenWidth()/2, ScreenHeight()/2)
 #define SG_UPDATETIME 0.2
+#define SNAKE_PART_SIZE olc::vi2d(1,1)
 #define SNAKE_COLOR olc::WHITE
-#define SNAKE_PART_SIZE v2d(1,1)
-
-typedef olc::v2d_generic<u_int8_t> v2d;
+#define SG_FOOD_COLOR olc::RED
+#define SG_BG_COLOR olc::BLACK
+#define SNAKE_HEAD snake_parts[0]
 
 class SnakeGame : public olc::PixelGameEngine{
 // Private properties
 private:
-    std::vector<v2d> snake_parts;
-    v2d speed;
+    std::vector<SnakePart> snake_parts;
+    olc::vi2d speed;
     float timeSinceUpdate;
+    olc::vi2d food_location;
+    bool is_dead;
 
 // Public Methods
 public:
@@ -23,34 +27,149 @@ public:
         sAppName = "Snake Game!";
     }
 
+    olc::vi2d get_rand_position(){
+        olc::vi2d res = olc::vi2d((u_int8_t)(rand() % ScreenWidth()), (u_int8_t)(rand() % ScreenHeight()));
+        return res;
+    }
+
     bool OnUserCreate() override{
-        snake_parts.push_back(SG_SCREENMIDDLE);
-        speed = v2d(1,0);
-        timeSinceUpdate = 0;
+        restart_game();
         return true;
     }
 
     bool OnUserUpdate(float fElapsedTime) override{
-        timeSinceUpdate += fElapsedTime;
-        if(timeSinceUpdate >= SG_UPDATETIME){
-            update_snake();
-            draw_snake();
-            timeSinceUpdate = 0;
+        if(!is_dead){
+            timeSinceUpdate += fElapsedTime;
+            if(timeSinceUpdate >= SG_UPDATETIME){
+                update_game();
+                draw_screen();
+                timeSinceUpdate = 0;
+            }
+        }
+        else{
+            show_dead_screen();
+            check_for_restart();
         }
         return true;
     }
 
-    void update_snake(){
-        for(int i = 0; i < snake_parts.size(); i++){
-            snake_parts[i].x += speed.x;
-            snake_parts[i].y += speed.y;
+    void restart_game(){
+        is_dead = false;
+        snake_parts.clear();
+        snake_parts.push_back(SnakePart::create(SG_SCREENMIDDLE, false));
+        speed = olc::vi2d(1,0);
+        update_food_location();
+
+        srand(time(NULL));
+        timeSinceUpdate = 0;
+    }
+
+    void grow_snake(){
+        snake_parts.push_back(SnakePart::create(snake_parts[snake_parts.size()-1].get_position()));
+    }
+
+    void check_for_restart(){
+        if(GetKey(olc::SPACE).bHeld || GetKey(olc::ENTER).bHeld){
+            restart_game();
         }
+    }
+
+    void show_dead_screen(){
+        Clear(olc::RED);
+        DrawString(1,ScreenHeight()/2,"Dead!");
+    }
+
+    void die(){
+        is_dead = true;
+        show_dead_screen();
+    }
+
+    bool snake_died(){
+        for(int i = 1; i < snake_parts.size(); i++){
+            if(snake_parts[i].get_position() == SNAKE_HEAD.get_position() && !snake_parts[i].is_frozen()){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void update_game(){
+        update_speed();
+        update_snake();
+        if(snake_collides_with(food_location)){
+            grow_snake();
+            update_food_location();
+        }
+        if(snake_died()){
+            die();
+        }
+    }
+
+    bool snake_collides_with(olc::vi2d pos){
+        for(int i = 0; i < snake_parts.size(); i++){
+            if(pos == snake_parts[i].get_position()){ return true; }
+        }
+        return false;
+    }
+
+    void update_snake(){
+        for(int i = snake_parts.size()-1; i > 0; i--){
+            snake_parts[i].update_part(snake_parts[i-1].get_position(), ScreenWidth(), ScreenHeight());
+        }
+        SNAKE_HEAD.update_part_by_speed(speed, ScreenWidth(), ScreenHeight());
+    }
+
+    void update_speed(){
+        olc::vi2d res = speed;
+        if(GetKey(olc::Key::LEFT).bHeld){
+            res.y = 0;
+            res.x = -1;
+        }
+        else if(GetKey(olc::Key::RIGHT).bHeld){
+            res.y = 0;
+            res.x = 1;
+        }
+
+        if(GetKey(olc::Key::UP).bHeld){
+            res.x = 0;
+            res.y = -1;
+        }
+        else if(GetKey(olc::Key::DOWN).bHeld){
+            res.x = 0;
+            res.y = 1;
+        }
+        if(SNAKE_HEAD.get_position() + res != snake_parts[1].get_position()){
+            speed = res;
+        }
+
+    }
+
+    void draw_screen(){
+        Clear(SG_BG_COLOR);
+        draw_snake();
+        draw_food();
     }
 
     void draw_snake(){
         for(int i = 0; i < snake_parts.size(); i++){
-            Clear(olc::BLACK);
-            FillRect(snake_parts[i], SNAKE_PART_SIZE, SNAKE_COLOR);
+            FillRect(snake_parts[i].get_position(), SNAKE_PART_SIZE, SNAKE_COLOR);
+        }
+    
+    }
+
+    void draw_food(){
+        FillRect(food_location, SNAKE_PART_SIZE, SG_FOOD_COLOR);
+    }
+
+    void update_food_location(){
+        bool found_valid_location = false;
+        olc::vi2d res;
+        while(!found_valid_location){
+            res = get_rand_position();
+            if(!snake_collides_with(res)){
+                found_valid_location = true;
+                food_location = res;
+            }
         }
     }
 };

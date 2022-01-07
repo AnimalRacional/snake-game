@@ -1,8 +1,9 @@
-#ifndef SG_SNAKEGAME_H
-#define SG_SNAKEGAME_H
+#ifndef SG_SNAKEGAME_CPP
+#define SG_SNAKEGAME_CPP
 #include "olcPixelGameEngine.h"
 #include <vector>
 #include "SnakePart.h"
+#include <pthread.h>
 #define SG_SCREENMIDDLE olc::vi2d(ScreenWidth()/2, ScreenHeight()/2)
 #define SG_UPDATETIME 0.2
 #define SNAKE_PART_SIZE olc::vi2d(1,1)
@@ -10,6 +11,8 @@
 #define SG_FOOD_COLOR olc::RED
 #define SG_BG_COLOR olc::BLACK
 #define SNAKE_HEAD snake_parts[0]
+
+#include <iostream>
 
 class SnakeGame : public olc::PixelGameEngine{
 // Private properties
@@ -19,6 +22,7 @@ private:
     float timeSinceUpdate;
     olc::vi2d food_location;
     bool is_dead;
+    pthread_t read_speed_thread;
 
 // Public Methods
 public:
@@ -53,6 +57,11 @@ public:
         return true;
     }
 
+    bool OnUserDestroy() override{
+        is_dead = true;
+        return pthread_join(read_speed_thread, NULL);
+    }
+
     void restart_game(){
         is_dead = false;
         snake_parts.clear();
@@ -62,6 +71,7 @@ public:
 
         srand(time(NULL));
         timeSinceUpdate = 0;
+        pthread_create(&read_speed_thread, NULL, update_speed_wrapper, this);
     }
 
     void grow_snake(){
@@ -94,7 +104,6 @@ public:
     }
 
     void update_game(){
-        update_speed();
         update_snake();
         if(snake_collides_with(food_location)){
             grow_snake();
@@ -117,6 +126,14 @@ public:
             snake_parts[i].update_part(snake_parts[i-1].get_position(), ScreenWidth(), ScreenHeight());
         }
         SNAKE_HEAD.update_part_by_speed(speed, ScreenWidth(), ScreenHeight());
+    }
+
+    static void *update_speed_wrapper(void* arg){
+        SnakeGame* game = reinterpret_cast<SnakeGame*>(arg);
+        while(!game->is_dead){
+            game->update_speed();
+        }
+        return NULL;
     }
 
     void update_speed(){

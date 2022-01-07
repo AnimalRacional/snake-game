@@ -39,9 +39,8 @@ public:
 
     void update_part_by_speed(olc::vi2d speed, int screen_width, int screen_height){
         if(!frozen){
-            position.x += speed.x;
+            position += speed;
             position.x = wrap_number(position.x, screen_width);
-            position.y += speed.y;
             position.y = wrap_number(position.y, screen_height);
         }
         else{

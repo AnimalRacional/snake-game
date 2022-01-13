@@ -129,6 +129,7 @@ public:
     static void *update_speed_wrapper(void* arg){
         SnakeGame* game = reinterpret_cast<SnakeGame*>(arg);
         while(!game->is_dead){
+            std::cout << "";
             game->update_speed();
         }
         return NULL;

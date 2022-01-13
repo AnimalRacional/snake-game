@@ -5,7 +5,7 @@
 #include "SnakePart.h"
 #include <pthread.h>
 #define SG_SCREENMIDDLE olc::vi2d(ScreenWidth()/2, ScreenHeight()/2)
-#define SG_UPDATETIME 0.2
+#define SG_UPDATETIME 0.1
 #define SNAKE_PART_SIZE olc::vi2d(1,1)
 #define SNAKE_COLOR olc::WHITE
 #define SG_FOOD_COLOR olc::RED
@@ -30,7 +30,7 @@ public:
     }
 
     olc::vi2d get_rand_position(){
-        olc::vi2d res = olc::vi2d((u_int8_t)(rand() % ScreenWidth()), (u_int8_t)(rand() % ScreenHeight()));
+        olc::vi2d res = olc::vi2d((rand() % ScreenWidth()), (rand() % ScreenHeight()));
         return res;
     }
 
